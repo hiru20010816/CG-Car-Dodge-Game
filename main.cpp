@@ -17,6 +17,8 @@ float enemyHeight = 0.28f;
 float enemySpeed = 0.015f;
 int score = 0;
 bool gameOver = false;
+bool gameStarted = false;
+float laneLineOffset = 0.0f;
 
 void drawText(float x, float y, const std::string& text) {
     glRasterPos2f(x, y);
@@ -34,19 +36,67 @@ void drawRectangle(float x, float y, float width, float height) {
     glEnd();
 }
 
-void drawRoad() {
-    glColor3f(0.15f, 0.15f, 0.15f);
-    drawRectangle(0.0f, 0.0f, 0.9f, 2.0f);
+void drawStartMenu() {
+    glColor3f(0.0f, 0.45f, 0.0f);
+    drawRectangle(0.0f, 0.0f, 2.0f, 2.0f);
 
-    glColor3f(1.0f, 1.0f, 1.0f);
-    drawRectangle(-0.45f, 0.0f, 0.02f, 2.0f);
-    drawRectangle(0.45f, 0.0f, 0.02f, 2.0f);
+    glColor3f(0.1f, 0.1f, 0.1f);
+    drawRectangle(0.0f, 0.0f, 1.2f, 1.4f);
 
     glColor3f(1.0f, 1.0f, 0.0f);
-    drawRectangle(0.0f, 0.7f, 0.03f, 0.25f);
-    drawRectangle(0.0f, 0.25f, 0.03f, 0.25f);
-    drawRectangle(0.0f, -0.2f, 0.03f, 0.25f);
-    drawRectangle(0.0f, -0.65f, 0.03f, 0.25f);
+    drawText(-0.33f, 0.45f, "CAR DODGE GAME");
+
+    glColor3f(1.0f, 1.0f, 1.0f);
+    drawText(-0.35f, 0.20f, "Press ENTER to Start");
+
+    drawText(-0.38f, -0.05f, "Controls:");
+    drawText(-0.38f, -0.18f, "A / Left Arrow  - Move Left");
+    drawText(-0.38f, -0.31f, "D / Right Arrow - Move Right");
+    drawText(-0.38f, -0.44f, "R - Restart");
+    drawText(-0.38f, -0.57f, "ESC - Exit");
+}
+
+void drawRoad() {
+    // Grass background
+    glColor3f(0.0f, 0.45f, 0.0f);
+    drawRectangle(0.0f, 0.0f, 2.0f, 2.0f);
+
+    // Road
+    glColor3f(0.12f, 0.12f, 0.12f);
+    drawRectangle(0.0f, 0.0f, 0.95f, 2.0f);
+
+    // Road side borders
+    glColor3f(1.0f, 1.0f, 1.0f);
+    drawRectangle(-0.48f, 0.0f, 0.025f, 2.0f);
+    drawRectangle(0.48f, 0.0f, 0.025f, 2.0f);
+
+    // Yellow side strips
+    glColor3f(1.0f, 0.85f, 0.0f);
+    drawRectangle(-0.42f, 0.0f, 0.018f, 2.0f);
+    drawRectangle(0.42f, 0.0f, 0.018f, 2.0f);
+
+    // Moving dashed center lane lines
+    glColor3f(1.0f, 1.0f, 1.0f);
+
+    float startY = -1.2f + laneLineOffset;
+
+    for (int i = 0; i < 7; i++) {
+        float y = startY + i * 0.4f;
+        drawRectangle(0.0f, y, 0.035f, 0.22f);
+    }
+
+    // Simple trees on grass area
+    glColor3f(0.35f, 0.18f, 0.05f);
+    drawRectangle(-0.75f, 0.65f, 0.04f, 0.18f);
+    drawRectangle(0.75f, 0.30f, 0.04f, 0.18f);
+    drawRectangle(-0.75f, -0.25f, 0.04f, 0.18f);
+    drawRectangle(0.75f, -0.70f, 0.04f, 0.18f);
+
+    glColor3f(0.0f, 0.65f, 0.0f);
+    drawRectangle(-0.75f, 0.78f, 0.16f, 0.16f);
+    drawRectangle(0.75f, 0.43f, 0.16f, 0.16f);
+    drawRectangle(-0.75f, -0.12f, 0.16f, 0.16f);
+    drawRectangle(0.75f, -0.57f, 0.16f, 0.16f);
 }
 
 void drawCar(float x, float y, bool isPlayer) {
@@ -90,7 +140,12 @@ void resetEnemy() {
 }
 
 void updateGame(int value) {
-    if (!gameOver) {
+    if (gameStarted && !gameOver) {
+        laneLineOffset -= 0.02f;
+
+        if (laneLineOffset < -0.4f) {
+            laneLineOffset = 0.0f;
+        }
         enemyY -= enemySpeed;
 
         if (enemyY < -1.1f) {
@@ -110,6 +165,12 @@ void updateGame(int value) {
 
 void display() {
     glClear(GL_COLOR_BUFFER_BIT);
+
+    if (!gameStarted) {
+        drawStartMenu();
+        glFlush();
+        return;
+    }
 
     drawRoad();
     drawCar(playerX, playerY, true);
@@ -133,6 +194,13 @@ void display() {
 }
 
 void keyboard(unsigned char key, int x, int y) {
+
+        if (key == 13) {
+        gameStarted = true;
+        glutPostRedisplay();
+        return;
+    }
+
     if (key == 'a' || key == 'A') {
         playerX -= 0.08f;
     }
