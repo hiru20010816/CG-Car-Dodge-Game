@@ -5,10 +5,21 @@
 #include <string>
 #include <sstream>
 
-float playerX = 0.0f;
-float playerY = -0.75f;
+// --- MEMBER 2: Player car position, size, and movement ----------------------
+const float PLAYER_START_X = 0.0f;
+const float PLAYER_START_Y = -0.75f;
+const float PLAYER_MIN_X = -0.36f;
+const float PLAYER_MAX_X = 0.36f;
+const float PLAYER_MOVE_SPEED = 0.045f;
+
+float playerX = PLAYER_START_X;
+float playerY = PLAYER_START_Y;
 float playerWidth = 0.18f;
-float playerHeight = 0.28f;
+float playerHeight = 0.30f;
+int playerMoveDirection = 0;
+bool moveLeftPressed = false;
+bool moveRightPressed = false;
+// ----------------------------------------------------------------------------
 
 // --- MEMBER 3: Enemy struct and array ---------------------------------------
 struct Enemy {
@@ -45,6 +56,21 @@ void drawRectangle(float x, float y, float width, float height) {
         glVertex2f(x - width / 2, y + height / 2);
     glEnd();
 }
+
+// --- MEMBER 2: Keep player movement inside the road -------------------------
+void clampPlayerToRoad() {
+    if (playerX < PLAYER_MIN_X) playerX = PLAYER_MIN_X;
+    if (playerX > PLAYER_MAX_X) playerX = PLAYER_MAX_X;
+}
+
+void resetPlayer() {
+    playerX = PLAYER_START_X;
+    playerY = PLAYER_START_Y;
+    playerMoveDirection = 0;
+    moveLeftPressed = false;
+    moveRightPressed = false;
+}
+// ----------------------------------------------------------------------------
 
 void drawStartMenu() {
     glColor3f(0.0f, 0.45f, 0.0f);
@@ -187,6 +213,76 @@ void drawCar(float x, float y, bool isPlayer) {
         drawRectangle(x, y + 0.04f, 0.10f, 0.07f);
     }
 }
+
+// --- MEMBER 2: Draw detailed player car facing upward -----------------------
+void drawPlayerCar(float x, float y) {
+    glPushMatrix();
+    glTranslatef(x, y, 0.0f);
+    glRotatef(-playerMoveDirection * 3.0f, 0.0f, 0.0f, 1.0f);
+
+    // Ground shadow
+    glColor3f(0.03f, 0.03f, 0.03f);
+    drawRectangle(0.0f, -0.02f, 0.20f, 0.31f);
+
+    // Rear spoiler
+    glColor3f(0.04f, 0.04f, 0.10f);
+    drawRectangle(0.0f, -0.16f, 0.23f, 0.03f);
+    drawRectangle(-0.09f, -0.135f, 0.02f, 0.045f);
+    drawRectangle(0.09f, -0.135f, 0.02f, 0.045f);
+
+    // Tyres
+    glColor3f(0.0f, 0.0f, 0.0f);
+    drawRectangle(-0.10f, 0.09f, 0.045f, 0.105f);
+    drawRectangle(0.10f, 0.09f, 0.045f, 0.105f);
+    drawRectangle(-0.10f, -0.09f, 0.045f, 0.105f);
+    drawRectangle(0.10f, -0.09f, 0.045f, 0.105f);
+
+    // Hubcaps
+    glColor3f(0.72f, 0.72f, 0.78f);
+    drawRectangle(-0.10f, 0.09f, 0.018f, 0.04f);
+    drawRectangle(0.10f, 0.09f, 0.018f, 0.04f);
+    drawRectangle(-0.10f, -0.09f, 0.018f, 0.04f);
+    drawRectangle(0.10f, -0.09f, 0.018f, 0.04f);
+
+    // Main body
+    glColor3f(0.10f, 0.40f, 1.0f);
+    drawRectangle(0.0f, 0.0f, 0.17f, 0.30f);
+
+    // Dark side panels
+    glColor3f(0.05f, 0.24f, 0.70f);
+    drawRectangle(-0.077f, 0.0f, 0.018f, 0.30f);
+    drawRectangle(0.077f, 0.0f, 0.018f, 0.30f);
+
+    // Hood and cabin
+    glColor3f(0.25f, 0.55f, 1.0f);
+    drawRectangle(0.0f, 0.11f, 0.14f, 0.06f);
+    glColor3f(0.07f, 0.30f, 0.85f);
+    drawRectangle(0.0f, -0.01f, 0.13f, 0.13f);
+
+    // Windows
+    glColor3f(0.62f, 0.90f, 1.0f);
+    drawRectangle(0.0f, 0.055f, 0.11f, 0.05f);
+    glColor3f(0.48f, 0.80f, 0.95f);
+    drawRectangle(0.0f, -0.075f, 0.11f, 0.045f);
+
+    // Racing stripes
+    glColor3f(1.0f, 1.0f, 1.0f);
+    drawRectangle(-0.028f, 0.115f, 0.014f, 0.05f);
+    drawRectangle(0.028f, 0.115f, 0.014f, 0.05f);
+    drawRectangle(-0.028f, -0.01f, 0.014f, 0.11f);
+    drawRectangle(0.028f, -0.01f, 0.014f, 0.11f);
+
+    // Lights
+    glColor3f(1.0f, 1.0f, 0.65f);
+    drawRectangle(-0.06f, 0.14f, 0.03f, 0.02f);
+    drawRectangle(0.06f, 0.14f, 0.03f, 0.02f);
+    glColor3f(1.0f, 0.12f, 0.12f);
+    drawRectangle(-0.06f, -0.14f, 0.03f, 0.02f);
+    drawRectangle(0.06f, -0.14f, 0.03f, 0.02f);
+
+    glPopMatrix();
+}
+// ----------------------------------------------------------------------------
 
 // --- MEMBER 3: Draw enemy car, truck, or pothole hazard ---------------------
 void drawEnemy(float x, float y, int type, float angle) {
@@ -384,6 +480,18 @@ bool checkCollision() {
 
 void updateGame(int value) {
     if (gameStarted && !gameOver) {
+        // --- MEMBER 2: Smooth player movement while keys are held ----------
+        playerMoveDirection = 0;
+        if (moveLeftPressed && !moveRightPressed) {
+            playerMoveDirection = -1;
+            playerX -= PLAYER_MOVE_SPEED;
+        } else if (moveRightPressed && !moveLeftPressed) {
+            playerMoveDirection = 1;
+            playerX += PLAYER_MOVE_SPEED;
+        }
+        clampPlayerToRoad();
+        // -------------------------------------------------------------------
+
         laneLineOffset -= ROAD_SPEED;
         if (laneLineOffset < -0.4f) {
             laneLineOffset = 0.0f;
@@ -444,7 +552,7 @@ void display() {
     }
 
     drawRoad();
-    drawCar(playerX, playerY, true);
+    drawPlayerCar(playerX, playerY);
 
     // --- MEMBER 3: Draw all enemies ----------------------------------------
     for (int i = 0; i < MAX_ENEMIES; i++) {
@@ -479,17 +587,18 @@ void keyboard(unsigned char key, int x, int y) {
     }
 
     if (key == 'a' || key == 'A') {
-        playerX -= 0.08f;
+        moveLeftPressed = true;
     }
 
     if (key == 'd' || key == 'D') {
-        playerX += 0.08f;
+        moveRightPressed = true;
     }
 
     if (key == 'r' || key == 'R') {
         gameOver = false;
         score = 0;
-        playerX = 0.0f;
+        gameStarted = true;
+        resetPlayer();
         initEnemies();  // --- MEMBER 3: reset all enemies on restart ---
     }
 
@@ -497,23 +606,53 @@ void keyboard(unsigned char key, int x, int y) {
         exit(0);
     }
 
-    if (playerX < -0.36f) playerX = -0.36f;
-    if (playerX >  0.36f) playerX =  0.36f;
+    clampPlayerToRoad();
+
+    glutPostRedisplay();
+}
+
+void keyboardUp(unsigned char key, int x, int y) {
+    if (key == 'a' || key == 'A') {
+        moveLeftPressed = false;
+    }
+
+    if (key == 'd' || key == 'D') {
+        moveRightPressed = false;
+    }
+
+    if (!moveLeftPressed && !moveRightPressed) {
+        playerMoveDirection = 0;
+    }
 
     glutPostRedisplay();
 }
 
 void specialKeys(int key, int x, int y) {
     if (key == GLUT_KEY_LEFT) {
-        playerX -= 0.08f;
+        moveLeftPressed = true;
     }
 
     if (key == GLUT_KEY_RIGHT) {
-        playerX += 0.08f;
+        moveRightPressed = true;
     }
 
-    if (playerX < -0.36f) playerX = -0.36f;
-    if (playerX >  0.36f) playerX =  0.36f;
+    clampPlayerToRoad();
+
+    glutPostRedisplay();
+}
+
+void specialKeysUp(int key, int x, int y) {
+    if (key == GLUT_KEY_LEFT) {
+        moveLeftPressed = false;
+    }
+
+    if (key == GLUT_KEY_RIGHT) {
+        moveRightPressed = false;
+    }
+
+    if (!moveLeftPressed && !moveRightPressed) {
+        playerMoveDirection = 0;
+    }
 
     glutPostRedisplay();
 }
@@ -521,6 +660,7 @@ void specialKeys(int key, int x, int y) {
 void init() {
     glClearColor(0.0f, 0.45f, 0.0f, 1.0f);
     srand(time(0));
+    resetPlayer();
     initEnemies();  // --- MEMBER 3: initialize all enemies ---
 }
 
@@ -535,7 +675,10 @@ int main(int argc, char** argv) {
 
     glutDisplayFunc(display);
     glutKeyboardFunc(keyboard);
+    glutKeyboardUpFunc(keyboardUp);
     glutSpecialFunc(specialKeys);
+    glutSpecialUpFunc(specialKeysUp);
+    glutIgnoreKeyRepeat(1);
     glutTimerFunc(16, updateGame, 0);
 
     glutMainLoop();

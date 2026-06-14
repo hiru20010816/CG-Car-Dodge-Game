@@ -22,6 +22,13 @@ The player controls a car on a road and avoids enemy cars coming from the top. T
 - Score system
 - Game over screen
 
+## Member 2 Contribution
+
+- Detailed player car drawing with body, tyres, windows, lights, spoiler, and racing stripes.
+- Smooth left/right movement using A/D and Left/Right arrow keys.
+- Road boundary clamping so the player car stays inside the playable lanes.
+- Player reset logic for restarting the game.
+
 ## Group Tasks
 
 | Member | Task |
