@@ -1,5 +1,22 @@
-"*.exe" 
-"*.o" 
-"*.cbp" 
-"bin/" 
-"obj/" 
+# Compiled objects and executables
+*.exe
+*.o
+*.obj
+*.out
+*.log
+
+# Build output folders
+bin/
+obj/
+build/
+
+# Code::Blocks temp files
+*.depend
+*.layout
+*.cbp
+
+# Editor / OS junk
+.vscode/
+Thumbs.db
+.DS_Store
+*~
